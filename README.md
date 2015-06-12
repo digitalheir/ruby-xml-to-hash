@@ -1,8 +1,6 @@
-# Xml::To::Hash
+# XML to Hash
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/xml/to/hash`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Ruby gem to convert XML into Hash (and into JSON). 
 
 ## Installation
 
@@ -22,7 +20,127 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+include 'xml/to/hash'
+
+xml_string = STR_XML = <<-EOS
+             <?xml version="1.0" encoding="UTF-8" ?>
+             <!DOCTYPE author [
+               <!ELEMENT author (#PCDATA)>
+               <!ENTITY MyParamEntity "Has been expanded">
+               <!ENTITY js "Me">
+             ]>
+             <myRoot>
+                   some text
+                   <!--
+                   In comments we can use ]]>
+                   <
+                   &, ', and ", but %MyParamEntity; will not be expanded-->
+                   <![CDATA[
+                   Character Data block <!-- <, & ' " -->  *and* %MyParamEntity;  
+                   ]]>
+                   <?linebreak?>
+                   <deeper xmlns="lol://some-namespace" how-deep="very-deep">randomtext
+                   <even 
+                     lol:my-attr="just an attribute" 
+                     xmlns:lol=\'lol://my.name.space/\' deeper="true">O</even></deeper>  
+             </myRoot>
+EOS
+
+xml = Nokogiri::XML STR_XML
+hash = xml.to_hash
+
+puts JSON.pretty_generate(hash)
+```
+
+produces
+
+```json
+{
+  "type": "element",
+  "name": "myRoot",
+  "children": [
+    {
+      "type": "text",
+      "content": "\n      some text\n      "
+    },
+    {
+      "type": "comment",
+      "content": "\n      In comments we can use ]]>\n      <\n      &, ', and \", but %MyParamEntity; will not be expanded"
+    },
+    {
+      "type": "text",
+      "content": "\n      "
+    },
+    {
+      "type": "cdata",
+      "content": "\n      Character Data block <!-- <, & ' \" -->  *and* %MyParamEntity;  \n      "
+    },
+    {
+      "type": "text",
+      "content": "\n      "
+    },
+    {
+      "type": "pi",
+      "name": "linebreak"
+    },
+    {
+      "type": "text",
+      "content": "\n      "
+    },
+    {
+      "type": "element",
+      "attrs": [
+        {
+          "name": "how-deep",
+          "value": "very-deep"
+        }
+      ],
+      "name": "deeper",
+      "namespace": {
+        "href": "lol://some-namespace"
+      },
+      "children": [
+        {
+          "type": "text",
+          "content": "randomtext\n      "
+        },
+        {
+          "type": "element",
+          "attrs": [
+            {
+              "name": "my-attr",
+              "value": "just an attribute",
+              "namespace": {
+                "href": "lol://my.name.space/",
+                "prefix": "lol"
+              }
+            },
+            {
+              "name": "deeper",
+              "value": "true"
+            }
+          ],
+          "name": "even",
+          "namespace": {
+            "href": "lol://some-namespace"
+          },
+          "children": [
+            {
+              "type": "text",
+              "content": "O"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "content": "  \n"
+    }
+  ]
+}
+```
 
 ## Development
 
@@ -32,7 +150,7 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/xml-to-hash. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/digitalheir/xml-to-hash. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](contributor-covenant.org) code of conduct.
 
 
 ## License

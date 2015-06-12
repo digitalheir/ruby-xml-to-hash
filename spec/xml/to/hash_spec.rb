@@ -14,6 +14,5 @@ describe Xml::To::Hash do
   it 'generates a hash from an XML string as in the example' do
     xml = Nokogiri::XML STR_XML
     expect(PRECOMPILED_HASH).to eq(xml.to_hash)
-   puts (Nokogiri::XML '<xml>hello</xml>').to_hash
   end
 end
