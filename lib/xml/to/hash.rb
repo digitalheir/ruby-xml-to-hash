@@ -1,18 +1,86 @@
-require 'xml/to/hash/version'
 require 'nokogiri'
 
 module Xml
+  # noinspection RubyClassModuleNamingConvention
   module To
     module Hash
+      def add_children!(node, hash, blacklist=[])
+        unless node.respond_to? :node_type and blacklist.include? node.node_type
+          if node.children and node.children.length > 0
+            children_nodes=[]
+            node.children.each do |child|
+              children_nodes << child.to_hash
+            end
+            hash[:children]=children_nodes
+          end
+        end
+      end
     end
   end
 end
+
 module Nokogiri
   module XML
-    class Node
+    class Namespace
+      include Xml::To::Hash
 
+      def to_hash
+        hash = {
+            href: href
+        }
+        if prefix
+          hash[:prefix] = prefix
+        end
+        hash
+      end
+    end
+    class ElementContent
+      include Xml::To::Hash
+
+      def to_hash
+        hash = {}
+        if name
+          hash[:name] = name
+        end
+        if prefix
+          hash[:prefix] = prefix
+        end
+        if occur
+          case occur
+            when ONCE
+              hash[:occur] = :once
+            when OPT
+              hash[:occur] = :opt
+            when MULT
+              hash[:occur] = :mult
+            when PLUS
+              hash[:occur] = :plus
+            else
+              raise "Could not handle occur value #{occur}"
+          end
+        end
+        if type
+          case type
+            when PCDATA
+              hash[:type] = :pcdata
+            when ELEMENT
+              hash[:type] = :element
+            when SEQ
+              hash[:type] = :seq
+            when OR
+              hash[:type] = :or
+            else
+              raise "Could not handle type value #{occur}"
+          end
+        end
+        add_children! self, hash
+        hash
+      end
+    end
+    class Node
+      include Xml::To::Hash
       # Returns node type as symbol instead of integer
-      def self.get_type int
+      def self.get_type(int)
         case int
           # Element node type, see Nokogiri::XML::Node#element?
           when Nokogiri::XML::Node::ELEMENT_NODE
@@ -78,99 +146,126 @@ module Nokogiri
           when Nokogiri::XML::Node::DOCB_DOCUMENT_NODE
             return :docb_document
           else
-            return int
+            raise "Could not handle node type #{int}"
         end
+      end
+
+      def set_attributes(hash)
+        hash = hash.clone
+        set_attributes!(hash)
+        hash
+      end
+
+      def set_attributes!(hash)
+        if respond_to? :attribute_nodes and attribute_nodes.length > 0
+          hash[:attributes] = []
+          attribute_nodes.each do |attr|
+            hash[:attributes] << attr.to_hash
+          end
+        end
+        hash
       end
 
       # Serialize this Node to a hash
       #
       # Example:
-      #    >> Nokogiri::XML '<xml>hello</xml>'
+      #    >> Nokogiri::XML('<xml>hello</xml>').root.to_hash
       #    => {:type=>:element, :name=>"xml", :children=>[{:type=>:text, :content=>"hello"}]}
       def to_hash
-        # Treat different elements a little bit differently 
-        case node_type
-          when Nokogiri::XML::Node::DOCUMENT_NODE
-            # doc_hash = {}
-            # nodes = []
-            # children.each do |child|
-            #   nodes << Node.obj_for_node(child)
-            # end
-            # doc_hash
-            Node.obj_for_node self
-          when Nokogiri::XML::Node::DTD_NODE
-            {
-                attributes: attributes,
-                elements: elements,
-                entities: entities,
-                notations: notations,
-                system_id: system_id,
-                external_id: external_id
-            }
-            #namespaces
-            #lang
-            if children and children.length > 0
-              
+        def set_if_respond_to!(hash, meth, blacklist=[])
+          unless blacklist.include? node_type
+            if respond_to? meth
+              val = send(meth)
+              if Node.get_type(node_type).to_s == val
+                puts "Consider blacklisting #{val} for #{meth}"
+              end
+              if val.respond_to? :to_hash
+                val = val.to_hash
+              end
+              hash[meth] = val
             end
-          else
-            Node.obj_for_node self
-        end
-      end
-
-      private
-      # Given a Nokigiri XML node, create a Ruby hash 
-      def self.obj_for_node node
-        ret = {
-            type: get_type(node.node_type),
-        }
-        if node.respond_to? :attributes and node.attributes.length > 0
-          ret[:attrs] = []
-          node.attributes
-          node.attributes.each do |key|
-            attr = key[1]
-            attr_o = {
-                name: key[0],
-                value: attr.content
-            }
-            if attr.namespace
-              attr_o[:namespace] = namespace_hash(attr.namespace)
-            end
-            ret[:attrs] << attr_o
           end
         end
-        # Treat elements a little bit differently 
-        case node.node_type
-          when Nokogiri::XML::Node::ELEMENT_NODE, Nokogiri::XML::Node::PI_NODE
-            ret[:name] = node.name
-          else
-            ret[:content]= node.content
+
+        # Helper functions
+        def set_object_array!(hash, meth)
+          if respond_to? meth and send(meth) and send(meth).length > 0
+            hash[meth] = []
+            array = send(meth)
+            case meth
+              when :entities, :elements
+                array = array.values
+              else
+            end
+            array.each do |el|
+              hash[meth] << el.to_hash
+            end
+          end
+          hash
         end
-        if node.respond_to? :namespace and node.namespace
-          ret[:namespace] = namespace_hash(node.namespace)
+
+        def set_content!(hash, blacklist=[])
+          unless blacklist.include? node_type
+            if respond_to? :content and content
+              c = content
+              if c.class == String
+                hash[:content] = c
+              elsif c.is_a? Nokogiri::XML::ElementContent
+                hash[:content] = c.to_hash
+              else
+                raise "Could not handle content class #{c.class}"
+              end
+            end
+          end
+          hash
+        end
+
+        # Initialize hash
+        hash = {
+            type: Node.get_type(node_type),
+        }
+
+        # Treat elements a little bit differently
+        case node_type
+          when Nokogiri::XML::Node::DTD_NODE
+            set_object_array!(hash, :elements)
+            set_object_array!(hash, :entities)
+          when Nokogiri::XML::Node::ELEMENT_DECL
+            handle_element_declaration!(hash)
+          else
+            # TODO
+        end
+
+        set_if_respond_to! hash, :name, [Node::DOCUMENT_NODE, Node::TEXT_NODE, Node::COMMENT_NODE]
+        set_content! hash, [Node::DOCUMENT_NODE, Node::ELEMENT_NODE]
+        set_attributes! hash
+        set_if_respond_to! hash, :line
+        set_if_respond_to! hash, :namespace
+        if respond_to? :namespace and namespace
+          hash[:namespace] = namespace.to_hash
         end
 
         # Recurse into children
-        if node.children and node.children.length > 0
-          unless node.element?
-            puts "W-What? Node had children, but was not an element (but a #{get_type node.node_type})"
-          end
-          ret[:children]=[]
-          node.children.each do |child|
-            ret[:children] << child.to_hash
-          end
-        end
-        ret
+        add_children! self, hash, [Nokogiri::XML::Node::DTD_NODE, Node::ATTRIBUTE_NODE]
+        hash
       end
 
-      def self.namespace_hash(namespace)
-        hash = {
-            href: namespace.href
-        }
-        if namespace.prefix
-          hash[:prefix] = namespace.prefix
+      def add_if_respond_to(hash, method)
+        if respond_to? method
+          hash[method]= self.send method
+        end
+      end
+
+      def handle_element_declaration!(hash)
+        if content
+          hash[:content] = content.to_hash
         end
         hash
       end
     end
+
+
+    private
+
   end
 end
