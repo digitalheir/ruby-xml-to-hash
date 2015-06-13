@@ -88,7 +88,33 @@ module Nokogiri
       #    >> Nokogiri::XML '<xml>hello</xml>'
       #    => {:type=>:element, :name=>"xml", :children=>[{:type=>:text, :content=>"hello"}]}
       def to_hash
-        Node.obj_for_node root
+        # Treat different elements a little bit differently 
+        case node_type
+          when Nokogiri::XML::Node::DOCUMENT_NODE
+            # doc_hash = {}
+            # nodes = []
+            # children.each do |child|
+            #   nodes << Node.obj_for_node(child)
+            # end
+            # doc_hash
+            Node.obj_for_node self
+          when Nokogiri::XML::Node::DTD_NODE
+            {
+                attributes: attributes,
+                elements: elements,
+                entities: entities,
+                notations: notations,
+                system_id: system_id,
+                external_id: external_id
+            }
+            #namespaces
+            #lang
+            if children and children.length > 0
+              
+            end
+          else
+            Node.obj_for_node self
+        end
       end
 
       private
@@ -97,7 +123,7 @@ module Nokogiri
         ret = {
             type: get_type(node.node_type),
         }
-        if node.attributes and node.attributes.length > 0
+        if node.respond_to? :attributes and node.attributes.length > 0
           ret[:attrs] = []
           node.attributes
           node.attributes.each do |key|
@@ -119,7 +145,7 @@ module Nokogiri
           else
             ret[:content]= node.content
         end
-        if node.namespace
+        if node.respond_to? :namespace and node.namespace
           ret[:namespace] = namespace_hash(node.namespace)
         end
 
@@ -130,7 +156,7 @@ module Nokogiri
           end
           ret[:children]=[]
           node.children.each do |child|
-            ret[:children] << obj_for_node(child)
+            ret[:children] << child.to_hash
           end
         end
         ret

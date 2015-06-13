@@ -1,6 +1,8 @@
 # XML to Hash
 
-Ruby gem to convert XML into Hash (and into JSON). 
+This Ruby gem adds a `to_hash` method to Nokogiri XML nodes, allowing us to convert arbitrary XML nodes to a Ruby hash, and serialize it to JSON.
+ 
+**NOTE:** This gem ignores fancy stuff like doctypes and entity declarations, but we do pick up on processing instructions. See the [example](#usage).
 
 ## Installation
 
@@ -48,7 +50,7 @@ xml_string = STR_XML = <<-EOS
 EOS
 
 xml = Nokogiri::XML STR_XML
-hash = xml.to_hash
+hash = xml.root.to_hash # Use xml.to_hash for information about the document, like DTD and stuff
 
 puts JSON.pretty_generate(hash)
 ```
