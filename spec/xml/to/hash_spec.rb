@@ -1,9 +1,8 @@
+# noinspection RubyResolve
 require 'spec_helper'
 require 'json'
 
 describe Xml::To::Hash do
-  xml = Nokogiri::XML STR_XML
-
   it 'has a version number' do
     expect(Xml::To::Hash::VERSION).not_to be nil
   end
@@ -12,11 +11,42 @@ describe Xml::To::Hash do
     expect(Nokogiri::XML::Node.method_defined? :to_hash).to eq(true)
   end
 
-  it 'generates a hash from an XML string as in the example' do
-    expect(PRECOMPILED_HASH).to eq(xml.root.to_hash)
+  ######
+  # DTD
+  ######
+  DTD_HASH = Nokogiri::XML(STR_XML).to_hash
+
+
+  it 'handles notations in the DTD' do
+    field = :notations
+
+    precompiled_hashes = FULL_DOC_HASH[:children][0][field]
+    generated = DTD_HASH[:children][0][field]
+    precompiled_hashes.each do |hash|
+      expect(generated.include?(hash)).to eq(true)
+    end
   end
 
-  it 'generates a hash an arbitrary XML node' do
-   
+  it 'handles entities in the DTD' do
+    field=:entities
+
+    precompiled_hashes = FULL_DOC_HASH[:children][0][field]
+    generated = DTD_HASH[:children][0][field]
+    precompiled_hashes.each do |hash|
+      expect(generated.include?(hash)).to eq(true)
+    end
+  end
+  it 'handles elements and atributes in the DTD' do
+    field=:elements
+
+    precompiled_hashes = FULL_DOC_HASH[:children][0][field]
+    generated = DTD_HASH[:children][0][field]
+    precompiled_hashes.each do |hash|
+      expect(generated.include?(hash)).to eq(true)
+    end
+  end
+
+  it 'handles elements' do
+    expect(FULL_DOC_HASH[:children][1]).to eq(DTD_HASH[:children][1])
   end
 end

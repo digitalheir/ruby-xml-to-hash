@@ -4,6 +4,8 @@ module Xml
   # noinspection RubyClassModuleNamingConvention
   module To
     module Hash
+      VERSION = '1.0.0'
+
       def add_children!(node, hash, blacklist=[])
         unless node.respond_to? :node_type and blacklist.include? node.node_type
           if node.children and node.children.length > 0
@@ -21,6 +23,24 @@ end
 
 module Nokogiri
   module XML
+    class Notation
+      def to_hash
+        hash = {
+        }
+        add_if_respond_to!(hash, :name)
+        add_if_respond_to!(hash, :public_id)
+        add_if_respond_to!(hash, :system_id)
+        hash
+      end
+
+      private
+      def add_if_respond_to!(hash, method)
+        if respond_to? method and self.send method
+          hash[method]= self.send method
+        end
+        hash
+      end
+    end
     class Namespace
       include Xml::To::Hash
 
@@ -176,13 +196,15 @@ module Nokogiri
           unless blacklist.include? node_type
             if respond_to? meth
               val = send(meth)
-              if Node.get_type(node_type).to_s == val
-                puts "Consider blacklisting #{val} for #{meth}"
+              if val
+                if Node.get_type(node_type).to_s == val
+                  puts "Consider blacklisting #{val} for #{meth}"
+                end
+                if val.respond_to? :to_hash
+                  val = val.to_hash
+                end
+                hash[meth] = val
               end
-              if val.respond_to? :to_hash
-                val = val.to_hash
-              end
-              hash[meth] = val
             end
           end
         end
@@ -193,7 +215,7 @@ module Nokogiri
             hash[meth] = []
             array = send(meth)
             case meth
-              when :entities, :elements
+              when :entities, :elements, :notations
                 array = array.values
               else
             end
@@ -230,17 +252,27 @@ module Nokogiri
           when Nokogiri::XML::Node::DTD_NODE
             set_object_array!(hash, :elements)
             set_object_array!(hash, :entities)
+            set_object_array!(hash, :notations)
           when Nokogiri::XML::Node::ELEMENT_DECL
-            handle_element_declaration!(hash)
+            puts 'lol'
+          when Nokogiri::XML::Node::ENTITY_DECL
+            set_if_respond_to! hash, :original_content
           else
-            # TODO
         end
 
         set_if_respond_to! hash, :name, [Node::DOCUMENT_NODE, Node::TEXT_NODE, Node::COMMENT_NODE]
+        set_if_respond_to! hash, :external_id # For DTD, entity declarations
+        set_if_respond_to! hash, :entity_type # For Entity declarations
+        set_if_respond_to! hash, :system_id # For Entity declarations
+        set_if_respond_to! hash, :attribute_type # For attribute declarations
+        set_if_respond_to! hash, :default # For attribute declarations
+        set_if_respond_to! hash, :enumeration # For attribute declarations
+        set_if_respond_to! hash, :element_type # For element declarations
+        set_if_respond_to! hash, :prefix # For element declarations
+
         set_content! hash, [Node::DOCUMENT_NODE, Node::ELEMENT_NODE]
         set_attributes! hash
         set_if_respond_to! hash, :line
-        set_if_respond_to! hash, :namespace
         if respond_to? :namespace and namespace
           hash[:namespace] = namespace.to_hash
         end
@@ -249,23 +281,6 @@ module Nokogiri
         add_children! self, hash, [Nokogiri::XML::Node::DTD_NODE, Node::ATTRIBUTE_NODE]
         hash
       end
-
-      def add_if_respond_to(hash, method)
-        if respond_to? method
-          hash[method]= self.send method
-        end
-      end
-
-      def handle_element_declaration!(hash)
-        if content
-          hash[:content] = content.to_hash
-        end
-        hash
-      end
     end
-
-
-    private
-
   end
 end

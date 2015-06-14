@@ -1,8 +1,12 @@
 # XML to Hash
 
-This Ruby gem adds a `to_hash` method to Nokogiri XML nodes, allowing us to convert arbitrary XML nodes to a Ruby hash, and serialize it to JSON.
- 
-**NOTE:** This gem ignores fancy stuff like doctypes and entity declarations, but we do pick up on processing instructions. See the [example](#usage).
+This Ruby gem adds a `to_hash` method to Nokogiri XML nodes, allowing us to convert arbitrary XML nodes to a Ruby hash,
+and so also to serialize them to JSON.
+
+This gem also picks up attributes, processing instructions and doctype declarations. The resulting hash is wordy, but complete.
+
+As an added bonus, we include line numbers where possible.
+
 
 ## Installation
 
@@ -26,27 +30,41 @@ Or install it yourself as:
 include 'xml/to/hash'
 
 xml_string = STR_XML = <<-EOS
-             <?xml version="1.0" encoding="UTF-8" ?>
-             <!DOCTYPE author [
-               <!ELEMENT author (#PCDATA)>
-               <!ENTITY MyParamEntity "Has been expanded">
-               <!ENTITY js "Me">
-             ]>
-             <myRoot>
-                   some text
-                   <!--
-                   In comments we can use ]]>
-                   <
-                   &, ', and ", but %MyParamEntity; will not be expanded-->
-                   <![CDATA[
-                   Character Data block <!-- <, & ' " -->  *and* %MyParamEntity;  
-                   ]]>
-                   <?linebreak?>
-                   <deeper xmlns="lol://some-namespace" how-deep="very-deep">randomtext
-                   <even 
-                     lol:my-attr="just an attribute" 
-                     xmlns:lol=\'lol://my.name.space/\' deeper="true">O</even></deeper>  
-             </myRoot>
+                       <!DOCTYPE dtd-name [
+                          <!ENTITY entity_1 "Has been ëxpÄnded">
+                          <!ENTITY entity_system SYSTEM "mt_cook1.jpg">
+                          <!ENTITY name_public PUBLIC "entity_public_id" "URI">
+                          <!NOTATION notation-system SYSTEM "notation-id-system">
+                          <!NOTATION NoTaTiOn-PuBLiC PUBLIC "notation-id-public">
+                          <!ELEMENT div1 (head,
+                       (p | list | note)*,
+                       div2*)>
+                          <!ELEMENT photo (hello)>
+                          <!ATTLIST photo some-attribute CDATA #REQUIRED>
+                          <!ATTLIST
+                            photo photo_att ENTITY #IMPLIED
+                            photo NOTATION (notation-system | NoTaTiOn-PuBLiC | notation-system) #IMPLIED>
+                       ]>
+
+                       <myRoot xml:id="root" xml:lang="en">
+                             some text
+                             <!--
+                             In comments we can use ]]>
+                             <
+                             &,
+                       ',
+                       and ",
+                       but %MyParamEntity; will not be expanded-->
+                             <![CDATA[
+                             Character Data block <!-- <,
+                       & ' " -->  *and* %MyParamEntity;
+                             ]]>
+                             <?linebreak?>
+                             <deeper xmlns="lol://some-namespace" how-deep="very-deep">☠☠☠randomtext☠☠☠
+                             <even
+                               lol:my-attr="just an attribute"
+                               xmlns:lol=\'lol://my.name.space/\' deeper="true">&amp;</even></deeper>
+                       </myRoot>
 EOS
 
 xml = Nokogiri::XML STR_XML
@@ -61,76 +79,117 @@ produces
 {
   "type": "element",
   "name": "myRoot",
+  "attributes": [
+    {
+      "type": "attribute",
+      "name": "id",
+      "content": "root",
+      "line": 17,
+      "namespace": {
+        "href": "http://www.w3.org/XML/1998/namespace",
+        "prefix": "xml"
+      }
+    },
+    {
+      "type": "attribute",
+      "name": "lang",
+      "content": "en",
+      "line": 17,
+      "namespace": {
+        "href": "http://www.w3.org/XML/1998/namespace",
+        "prefix": "xml"
+      }
+    }
+  ],
+  "line": 17,
   "children": [
     {
       "type": "text",
-      "content": "\n      some text\n      "
+      "content": "\n                             some text\n                             ",
+      "line": 19
     },
     {
       "type": "comment",
-      "content": "\n      In comments we can use ]]>\n      <\n      &, ', and \", but %MyParamEntity; will not be expanded"
+      "content": "\n                             In comments we can use ]]>\n                             <\n                             &,\n                       ',\n                       and \",\n                       but %MyParamEntity; will not be expanded",
+      "line": 25
     },
     {
       "type": "text",
-      "content": "\n      "
+      "content": "\n                             ",
+      "line": 26
     },
     {
       "type": "cdata",
-      "content": "\n      Character Data block <!-- <, & ' \" -->  *and* %MyParamEntity;  \n      "
+      "name": "#cdata-section",
+      "content": "\n                             Character Data block <!-- <,\n                       & ' \" -->  *and* %MyParamEntity;\n                             ",
+      "line": 26
     },
     {
       "type": "text",
-      "content": "\n      "
+      "content": "\n                             ",
+      "line": 30
     },
     {
       "type": "pi",
-      "name": "linebreak"
+      "name": "linebreak",
+      "line": 30
     },
     {
       "type": "text",
-      "content": "\n      "
+      "content": "\n                             ",
+      "line": 31
     },
     {
       "type": "element",
-      "attrs": [
+      "name": "deeper",
+      "attributes": [
         {
+          "type": "attribute",
           "name": "how-deep",
-          "value": "very-deep"
+          "content": "very-deep",
+          "line": 31
         }
       ],
-      "name": "deeper",
+      "line": 31,
       "namespace": {
         "href": "lol://some-namespace"
       },
       "children": [
         {
           "type": "text",
-          "content": "randomtext\n      "
+          "content": "☠☠☠randomtext☠☠☠\n                             ",
+          "line": 32
         },
         {
           "type": "element",
-          "attrs": [
+          "name": "even",
+          "attributes": [
             {
+              "type": "attribute",
               "name": "my-attr",
-              "value": "just an attribute",
+              "content": "just an attribute",
+              "line": 34,
               "namespace": {
                 "href": "lol://my.name.space/",
                 "prefix": "lol"
               }
             },
             {
+              "type": "attribute",
               "name": "deeper",
-              "value": "true"
+              "content": "true",
+              "line": 34
             }
           ],
-          "name": "even",
+          "line": 34,
           "namespace": {
             "href": "lol://some-namespace"
           },
           "children": [
             {
               "type": "text",
-              "content": "O"
+              "content": "&",
+              "line": 34
             }
           ]
         }
@@ -138,7 +197,8 @@ produces
     },
     {
       "type": "text",
-      "content": "  \n"
+      "content": "\n                       ",
+      "line": 35
     }
   ]
 }
@@ -146,7 +206,7 @@ produces
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake rspec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
 To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
