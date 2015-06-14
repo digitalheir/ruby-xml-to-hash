@@ -27,7 +27,7 @@ Or install it yourself as:
 ## Usage
 
 ```ruby
-include 'xml/to/hash'
+require 'xml/to/hash'
 
 xml_string = STR_XML = <<-EOS
                        <!DOCTYPE dtd-name [
