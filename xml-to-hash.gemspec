@@ -9,8 +9,10 @@ Gem::Specification.new do |spec|
   spec.authors = ['Maarten Trompper']
   spec.email = ['maartentrompper@gmail.com']
 
-  spec.summary = %q{Transparently convert XML documents to Ruby hashes (and JSON, and beyond)}
-  spec.description = %q{This gem add a `to_hash` method to Nokogiri XML nodes into a Ruby hash. In the resulting hash, all keys are constants.
+  spec.required_ruby_version = '>= 1.9.2'
+
+  spec.summary = %q{Transparently transform XML documents to Ruby hashes (and JSON, and beyond)}
+  spec.description = %q{This gem adds a `to_hash` method to Nokogiri XML nodes into a Ruby hash. In the resulting hash, all keys are constants.
 
 This gem also picks up attributes, processing instructions and doctype declarations. The resulting Hash is wordy, but complete.
 
@@ -30,6 +32,7 @@ As an added bonus, we include line numbers where possible.}
   spec.bindir = 'exe'
   spec.executables = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
   spec.require_paths = ['lib']
+
 
   spec.add_development_dependency 'bundler', '~> 1.10'
   spec.add_development_dependency 'rake', '~> 10.0'
