@@ -7,9 +7,9 @@ Gem::Specification.new do |spec|
   spec.name = 'xml-to-hash'
   spec.version = Xml::To::Hash::VERSION
   spec.authors = ['Maarten Trompper']
-  spec.email = ['m.f.a.trompper@uva.nl']
+  spec.email = ['maartentrompper@gmail.com']
 
-  spec.summary = %q{Transparently convert XML documents to Ruby hashes (...and JSON, and beyond)}
+  spec.summary = %q{Transparently convert XML documents to Ruby hashes (and JSON, and beyond)}
   spec.description = %q{This gem add a `to_hash` method to Nokogiri XML nodes into a Ruby hash. In the resulting hash, all keys are constants.
 
 This gem also picks up attributes, processing instructions and doctype declarations. The resulting Hash is wordy, but complete.
@@ -35,5 +35,5 @@ As an added bonus, we include line numbers where possible.}
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 2.4'
 
-  spec.add_runtime_dependency 'nokogiri', '~> 1.6.6.2', '>= 1.6.6.2'
+  spec.add_runtime_dependency 'nokogiri', '~> 1', '>= 1.6'
 end

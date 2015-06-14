@@ -4,7 +4,7 @@ module Xml
   # noinspection RubyClassModuleNamingConvention
   module To
     module Hash
-      VERSION = '1.0.0'
+      VERSION = '1.0.1'
 
       def add_children!(node, hash, blacklist=[])
         unless node.respond_to? :node_type and blacklist.include? node.node_type
