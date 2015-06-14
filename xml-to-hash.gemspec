@@ -10,8 +10,11 @@ Gem::Specification.new do |spec|
   spec.email = ['m.f.a.trompper@uva.nl']
 
   spec.summary = %q{Transparently convert XML documents to Ruby hashes (...and JSON, and beyond)}
-  spec.description = %q{This gem add a to_hash method to Nokogiri XML nodes into a Ruby hash. We generate a hash, 
-in which all keys are constants. This gem also picks up attributes, processing instructions and doctype declarations. The resulting Hash is wordy, but complete. As an added bonus, we include line numbers where possible.}
+  spec.description = %q{This gem add a `to_hash` method to Nokogiri XML nodes into a Ruby hash. In the resulting hash, all keys are constants.
+
+This gem also picks up attributes, processing instructions and doctype declarations. The resulting Hash is wordy, but complete.
+
+As an added bonus, we include line numbers where possible.}
   spec.homepage = 'https://github.com/digitalheir/ruby-xml-to-hash'
   spec.license = 'MIT'
 
