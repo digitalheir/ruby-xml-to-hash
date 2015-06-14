@@ -28,6 +28,7 @@ Or install it yourself as:
 
 ```ruby
 require 'xml/to/hash'
+require 'json'
 
 xml_string = STR_XML = <<-EOS
                        <!DOCTYPE dtd-name [
