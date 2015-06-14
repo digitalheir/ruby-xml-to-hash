@@ -254,7 +254,6 @@ module Nokogiri
             set_object_array!(hash, :entities)
             set_object_array!(hash, :notations)
           when Nokogiri::XML::Node::ELEMENT_DECL
-            puts 'lol'
           when Nokogiri::XML::Node::ENTITY_DECL
             set_if_respond_to! hash, :original_content
           else
