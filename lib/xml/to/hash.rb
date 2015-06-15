@@ -197,9 +197,9 @@ module Nokogiri
             if respond_to? meth
               val = send(meth)
               if val
-                if Node.get_type(node_type).to_s == val
-                  puts "Consider blacklisting #{val} for #{meth}"
-                end
+                # if Node.get_type(node_type).to_s == val
+                #   puts "Consider blacklisting #{val} for #{meth}"
+                # end
                 if val.respond_to? :to_hash
                   val = val.to_hash
                 end
