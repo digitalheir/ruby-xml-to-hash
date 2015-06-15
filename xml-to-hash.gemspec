@@ -37,6 +37,8 @@ As an added bonus, we include line numbers where possible.}
   spec.add_development_dependency 'bundler', '~> 1.10'
   spec.add_development_dependency 'rake', '~> 10.0'
   spec.add_development_dependency 'rspec', '~> 2.4'
+  spec.add_development_dependency 'codeclimate-test-reporter'
+
 
   spec.add_runtime_dependency 'nokogiri', '~> 1', '>= 1.6'
 end

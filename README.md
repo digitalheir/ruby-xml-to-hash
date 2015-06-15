@@ -1,5 +1,7 @@
 # XML to Hash
 [![Build Status](https://travis-ci.org/digitalheir/ruby-xml-to-hash.svg?branch=master)](https://travis-ci.org/digitalheir/ruby-xml-to-hash)
+[![Code Climate](https://codeclimate.com/github/digitalheir/ruby-xml-to-hash/badges/gpa.svg)](https://codeclimate.com/github/digitalheir/ruby-xml-to-hash)
+
 
 This Ruby gem adds a `to_hash` method to Nokogiri XML nodes, allowing us to convert arbitrary XML nodes to a Ruby hash,
 and so also to serialize them to JSON.
