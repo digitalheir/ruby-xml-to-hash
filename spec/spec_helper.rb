@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift File.expand_path('../../lib',
                                     __FILE__)
 require 'xml/to/hash'
+require 'xml/to/hash/version'
 
 STR_XML = <<-EOS
 <!DOCTYPE dtd-name [
